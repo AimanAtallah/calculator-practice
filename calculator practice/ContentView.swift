@@ -14,8 +14,9 @@ struct ContentView: View {
     @State var computeDone = false
     @State var myHistory: [String] = []
     
-    
-    
+    // limit the symbols displayed to 10
+    // fix the delete button
+    // create a previous history tab
     
     func handleNumberTap(_ symbol: String){
         if computeDone {
@@ -47,12 +48,20 @@ struct ContentView: View {
         switch op {
         case "x":
             result = left * right
+            let resultString = String(result)
+            myHistory.append(resultString)
         case "/":
             result = right == 0 ? 0 :left / right
+            let resultString = String(result)
+            myHistory.append(resultString)
         case "-":
             result = left - right
+            let resultString = String(result)
+            myHistory.append(resultString)
         case "+":
             result =  left + right
+            let resultString = String(result)
+            myHistory.append(resultString)
         default:
             break
         }
@@ -66,6 +75,7 @@ struct ContentView: View {
         previousInput = "0"
         currentOperator = nil
         computeDone = false
+        myHistory = []
     }
     
     func handlePercentage(){
@@ -76,6 +86,7 @@ struct ContentView: View {
     func handleDecimals(){
         if !currentInput.contains(".") {
             currentInput.append(".")
+            myHistory.append(currentInput)
         }
     }
     
@@ -83,57 +94,110 @@ struct ContentView: View {
         guard var currentValue = Double(currentInput) else { return }
         currentValue *= -1
         currentInput = String(currentValue)
+        myHistory.append(currentInput)
+    }
+    
+    func handleDelete(){
+        if !currentInput.isEmpty{
+            currentInput.removeLast()
+        }
+        if currentInput.isEmpty{
+            currentInput = "0"
+        }
+        
+        myHistory.count > 0 ? myHistory.count -= 1 : ()
     }
     
     let buttonSymbols = [
-        ["AC", "+/-", "%" ,"/",],
+        ["del", "AC", "%" ,"/",],
         ["7", "8", "9", "x",],
         ["4", "5", "6", "-",],
-        ["0", ".", "=", "+",],
+        ["1", "2", "3", "+",],
+        ["+/-","0", ".", "=",],
     ]
     var body: some View {
         VStack {
+            Spacer(minLength: 120)
             HStack{
-                if myHistory == []{
+                if myHistory.isEmpty{
                     Text(currentInput)
+                        .font(.system(size: 67, weight: .semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.3)
                 }else{
                     ForEach(myHistory, id: \.self) { text in
                         Text(text)
+                            .font(.system(size: 67, weight: .semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.3)
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
             ForEach(buttonSymbols, id: \.self){ row in
                 HStack{
                     ForEach(row, id: \.self){ symbol in
-                        Button(symbol) {
+                        Button(action: {
                             if symbol >= "0" && symbol <= "9" {
-                                
-                                handleNumberTap(symbol)
+                                if myHistory.count <= 10{
+                                    myHistory.append(symbol)
+                                    handleNumberTap(symbol)
+                                }
                             }else if  symbol == "+" || symbol == "-" || symbol == "x" || symbol == "/"{
-                                myHistory.append(symbol )
+                                myHistory.append(symbol)
                                 handleOperatorTap(symbol)
                             }else if symbol == "="{
+                                myHistory.append(symbol)
                                 handleEqualsSign()
                             }else if symbol == "AC" {
                                 handleAC()
                             }else if symbol == "%"{
-                                myHistory.append(symbol )
                                 handlePercentage()
                             }else if symbol == "."{
-                                myHistory.append(symbol )
                                 handleDecimals()
                             }else if symbol == "+/-"{
-                                myHistory.append(symbol )
                                 handlePlusMinus()
+                            }else if symbol == "del"{
+                                handleDelete()
+                            }
+                        }){
+                            if symbol == "del" {
+                                Image(systemName: "delete.left.fill")
+                                    .font(.title)
+                            }else if symbol == "AC"{
+                                Image(systemName: "ac")
+                                    .font(.title)
+                            }else if symbol == "=" {
+                                Image(systemName: "equal.circle")
+                                    .font(.title)
+                            }else if symbol == "x" {
+                                Image(systemName: "multiply.circle")
+                                    .font(.title)
+                            }else if symbol == "/"{
+                                Image(systemName: "equal.circle")
+                                    .font(.title)
+                            }else if symbol == "-" {
+                                Image(systemName: "minus.circle")
+                                    .font(.title)
+                            }else if symbol == "+"{
+                                Image(systemName: "plus.circle")
+                                    .font(.title)
+                            }else if symbol == "%"{
+                                Image(systemName: "percent")
+                                    .font(.title)
+                            }else{
+                                Text(symbol)
+                                    .font(.title)
                             }
                         }
                         .buttonStyle(.plain)
-                        .frame(width: 50, height: 45, alignment: .center)
+                        .frame(width: 86, height: 81, alignment: .center)
                         .foregroundColor(Color.black)
                         .background((symbol == "/" ||
                            symbol == "x"   ||
                            symbol == "-"   ||
-                           symbol == "+"    ) ?
+                           symbol == "+"   ||
+                           symbol == "="         ) ?
                                     Color.orange : Color.gray)
                         .clipShape(Capsule())
                         .foregroundColor(Color.black)
