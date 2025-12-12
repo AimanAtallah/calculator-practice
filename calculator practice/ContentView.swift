@@ -13,10 +13,12 @@ struct ContentView: View {
     @State var currentOperator: String? = nil
     @State var computeDone = false
     @State var myHistory: [String] = []
-    
-    // limit the symbols displayed to 10
-    // fix the delete button
+  
+
     // create a previous history tab
+    // fix decimal it appends entire string to end of current input
+    //percentage was reworked check for edge cases
+    
     
     func handleNumberTap(_ symbol: String){
         if computeDone {
@@ -32,10 +34,12 @@ struct ContentView: View {
     }
 
     func handleOperatorTap(_ op: String){
-        previousInput = currentInput
-        currentOperator = op
-        currentInput = "0"
-        computeDone = false
+        if currentOperator == nil && currentInput != "0"{
+            previousInput = currentInput
+            currentOperator = op
+            currentInput = "0"
+            myHistory.append(currentOperator ?? op)
+        }
     }
     
     func handleEqualsSign(){
@@ -49,18 +53,22 @@ struct ContentView: View {
         case "x":
             result = left * right
             let resultString = String(result)
+            myHistory = []
             myHistory.append(resultString)
         case "/":
             result = right == 0 ? 0 :left / right
             let resultString = String(result)
+            myHistory = []
             myHistory.append(resultString)
         case "-":
             result = left - right
             let resultString = String(result)
+            myHistory = []
             myHistory.append(resultString)
         case "+":
             result =  left + right
             let resultString = String(result)
+            myHistory = []
             myHistory.append(resultString)
         default:
             break
@@ -79,8 +87,14 @@ struct ContentView: View {
     }
     
     func handlePercentage(){
-        guard let currentValue = Double(currentInput) else { return }
-        currentInput = String(currentValue / 100)
+        if currentInput != "0"{
+            let currentValue = Double(currentInput) ?? 0
+            let result = currentValue / 100
+            let resultString = String(result)
+            myHistory = []
+            myHistory.append(resultString)
+            currentInput = resultString
+        }
     }
     
     func handleDecimals(){
@@ -98,14 +112,15 @@ struct ContentView: View {
     }
     
     func handleDelete(){
-        if !currentInput.isEmpty{
-            currentInput.removeLast()
+        if myHistory.count > 0 {
+            myHistory.removeLast()
         }
-        if currentInput.isEmpty{
+        if myHistory.isEmpty{
             currentInput = "0"
+            previousInput = "0"
+            currentOperator = nil
+            computeDone = false
         }
-        
-        myHistory.count > 0 ? myHistory.count -= 1 : ()
     }
     
     let buttonSymbols = [
@@ -139,15 +154,13 @@ struct ContentView: View {
                     ForEach(row, id: \.self){ symbol in
                         Button(action: {
                             if symbol >= "0" && symbol <= "9" {
-                                if myHistory.count <= 10{
+                                if myHistory.count <= 9{
                                     myHistory.append(symbol)
                                     handleNumberTap(symbol)
                                 }
                             }else if  symbol == "+" || symbol == "-" || symbol == "x" || symbol == "/"{
-                                myHistory.append(symbol)
                                 handleOperatorTap(symbol)
                             }else if symbol == "="{
-                                myHistory.append(symbol)
                                 handleEqualsSign()
                             }else if symbol == "AC" {
                                 handleAC()
@@ -174,7 +187,7 @@ struct ContentView: View {
                                 Image(systemName: "multiply.circle")
                                     .font(.title)
                             }else if symbol == "/"{
-                                Image(systemName: "equal.circle")
+                                Image(systemName: "divide.circle")
                                     .font(.title)
                             }else if symbol == "-" {
                                 Image(systemName: "minus.circle")
@@ -190,7 +203,7 @@ struct ContentView: View {
                                     .font(.title)
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.bordered)
                         .frame(width: 86, height: 81, alignment: .center)
                         .foregroundColor(Color.black)
                         .background((symbol == "/" ||
@@ -199,6 +212,7 @@ struct ContentView: View {
                            symbol == "+"   ||
                            symbol == "="         ) ?
                                     Color.orange : Color.gray)
+                        .opacity(1.25)
                         .clipShape(Capsule())
                         .foregroundColor(Color.black)
                         
