@@ -17,6 +17,7 @@ struct ContentView: View {
     @State var computeHistory:[String] = []
     @State private var showSheet = false
    
+
    
     
     struct SheetView: View {
@@ -29,14 +30,16 @@ struct ContentView: View {
             VStack {
                 List(history, id: \.self) { item in
                     Text(item)
+                    Spacer()
                 }
-
-                Button("Clear History") {
-                    history.removeAll()
-                }
-
-                Button("Close") {
-                    dismiss()
+                HStack(spacing: 90){
+                    Button("Clear History") {
+                        history.removeAll()
+                    }
+                    
+                    Button("Close") {
+                        dismiss()
+                    }
                 }
             }
             .padding()
@@ -70,7 +73,6 @@ struct ContentView: View {
     
     func handleNumberTap(_ symbol: String){
         if computeDone {
-            onDisplay = []
             currentInput = symbol
             computeDone = false
             handleInput(symbol)
@@ -82,7 +84,15 @@ struct ContentView: View {
             return
         }
         currentInput += symbol
-        handleInput(symbol)
+        if previousInput == "0"{
+            onDisplay = []
+            computeHistory.removeAll{currentInput.contains($0)}
+            handleInput(currentInput)
+        }else{
+            onDisplay.removeAll{currentInput.contains($0)}
+            computeHistory.removeAll{currentInput.contains($0)}
+            handleInput(currentInput)
+        }
     }
 
     func handleOperatorTap(_ op: String){
@@ -122,7 +132,7 @@ struct ContentView: View {
             break
         }
         currentInput = String(result)
-        previousInput = String(result)
+        previousInput = "0"
         currentOperator = nil
         computeDone = true
     }
@@ -145,7 +155,8 @@ struct ContentView: View {
         }
     }
     
-    func handleDecimals(){
+    
+   func handleDecimals(){
         if !currentInput.contains(".") {
             if previousInput == "0"{
                 onDisplay = []
@@ -169,14 +180,23 @@ struct ContentView: View {
     }
     
     func handleDelete(){
-        if onDisplay.count > 0 {
-            onDisplay.removeLast()
-        }
         if onDisplay.isEmpty{
             currentInput = "0"
             previousInput = "0"
             currentOperator = nil
             computeDone = false
+        }else{
+            let SecondTempString = currentInput
+            currentInput.removeLast()
+            let tempString = currentInput
+            currentInput.removeAll()
+                if previousInput == "0"{
+                    onDisplay = []
+                    handleNumberTap(tempString)
+                }else{
+                    onDisplay.removeAll{ $0 == SecondTempString}
+                    handleNumberTap(tempString)
+                }
         }
     }
     
@@ -196,6 +216,11 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "clock")
                     .font(.title)
+                    .buttonStyle(.bordered)
+                    .frame(width: 50, height: 50, alignment: .center)
+                    .foregroundColor(Color.white)
+                    .background(Color.black)
+                    .clipShape(Capsule())
             }
             .sheet(isPresented: $showSheet){
                 SheetView(history: $displayHistory)
