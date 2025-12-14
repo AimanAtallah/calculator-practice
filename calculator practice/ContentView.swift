@@ -12,25 +12,73 @@ struct ContentView: View {
     @State var previousInput = "0"
     @State var currentOperator: String? = nil
     @State var computeDone = false
-    @State var myHistory: [String] = []
-  
-
-    // create a previous history tab
+    @State var onDisplay: [String] = []
+    @State var displayHistory:[String] = []
+    @State var computeHistory:[String] = []
+    @State private var showSheet = false
+    // fix previous history tab 
     // fix decimal it appends entire string to end of current input
     //percentage was reworked check for edge cases
     
+    struct SheetView: View {
+
+        @Binding var history: [String]
+        @Environment(\.dismiss) var dismiss
+
+        var body: some View {
+            VStack {
+                List(history, id: \.self) { item in
+                    Text(item)
+                }
+
+                Button("Clear History") {
+                    history.removeAll()
+                }
+
+                Button("Close") {
+                    dismiss()
+                }
+            }
+            .padding()
+        }
+    }
+    
+    
+    func handleHistory(_ historyArr: Array<Any>){
+        var temp = ""
+        for item in computeHistory{
+            temp += item
+        }
+        computeHistory = []
+        
+        displayHistory.append(temp)
+    }
+    
+    func handleOutput(_ symbol: String){
+        onDisplay = []
+        onDisplay.append(symbol)
+        computeHistory.append(symbol)
+    }
+    
+    func handleInput(_ symbol: String){
+        onDisplay.append(symbol)
+        computeHistory.append(symbol)
+    }
     
     func handleNumberTap(_ symbol: String){
         if computeDone {
             currentInput = symbol
             computeDone = false
+            handleInput(symbol)
             return
         }
         if currentInput == "0" {
             currentInput = symbol
+            handleInput(symbol)
             return
         }
         currentInput += symbol
+        handleInput(symbol)
     }
 
     func handleOperatorTap(_ op: String){
@@ -38,7 +86,7 @@ struct ContentView: View {
             previousInput = currentInput
             currentOperator = op
             currentInput = "0"
-            myHistory.append(currentOperator ?? op)
+            handleInput(currentOperator ?? op)
         }
     }
     
@@ -53,23 +101,19 @@ struct ContentView: View {
         case "x":
             result = left * right
             let resultString = String(result)
-            myHistory = []
-            myHistory.append(resultString)
+            handleOutput(resultString)
         case "/":
             result = right == 0 ? 0 :left / right
             let resultString = String(result)
-            myHistory = []
-            myHistory.append(resultString)
+            handleOutput(resultString)
         case "-":
             result = left - right
             let resultString = String(result)
-            myHistory = []
-            myHistory.append(resultString)
+            handleOutput(resultString)
         case "+":
             result =  left + right
             let resultString = String(result)
-            myHistory = []
-            myHistory.append(resultString)
+            handleOutput(resultString)
         default:
             break
         }
@@ -83,7 +127,7 @@ struct ContentView: View {
         previousInput = "0"
         currentOperator = nil
         computeDone = false
-        myHistory = []
+        onDisplay = []
     }
     
     func handlePercentage(){
@@ -91,8 +135,8 @@ struct ContentView: View {
             let currentValue = Double(currentInput) ?? 0
             let result = currentValue / 100
             let resultString = String(result)
-            myHistory = []
-            myHistory.append(resultString)
+            onDisplay = []
+            onDisplay.append(resultString)
             currentInput = resultString
         }
     }
@@ -100,7 +144,7 @@ struct ContentView: View {
     func handleDecimals(){
         if !currentInput.contains(".") {
             currentInput.append(".")
-            myHistory.append(currentInput)
+            onDisplay.append(currentInput)
         }
     }
     
@@ -108,14 +152,14 @@ struct ContentView: View {
         guard var currentValue = Double(currentInput) else { return }
         currentValue *= -1
         currentInput = String(currentValue)
-        myHistory.append(currentInput)
+        onDisplay.append(currentInput)
     }
     
     func handleDelete(){
-        if myHistory.count > 0 {
-            myHistory.removeLast()
+        if onDisplay.count > 0 {
+            onDisplay.removeLast()
         }
-        if myHistory.isEmpty{
+        if onDisplay.isEmpty{
             currentInput = "0"
             previousInput = "0"
             currentOperator = nil
@@ -130,17 +174,28 @@ struct ContentView: View {
         ["1", "2", "3", "+",],
         ["+/-","0", ".", "=",],
     ]
+
+    
     var body: some View {
         VStack {
+            Button{
+                showSheet = true
+            } label: {
+                Image(systemName: "clock")
+                    .font(.title)
+            }
+            .sheet(isPresented: $showSheet){
+                SheetView(history: $displayHistory)
+            }
             Spacer(minLength: 120)
             HStack{
-                if myHistory.isEmpty{
+                if onDisplay.isEmpty{
                     Text(currentInput)
                         .font(.system(size: 67, weight: .semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.3)
                 }else{
-                    ForEach(myHistory, id: \.self) { text in
+                    ForEach(onDisplay, id: \.self) { text in
                         Text(text)
                             .font(.system(size: 67, weight: .semibold))
                             .lineLimit(1)
@@ -154,8 +209,7 @@ struct ContentView: View {
                     ForEach(row, id: \.self){ symbol in
                         Button(action: {
                             if symbol >= "0" && symbol <= "9" {
-                                if myHistory.count <= 9{
-                                    myHistory.append(symbol)
+                                if onDisplay.count <= 9{
                                     handleNumberTap(symbol)
                                 }
                             }else if  symbol == "+" || symbol == "-" || symbol == "x" || symbol == "/"{
@@ -212,7 +266,7 @@ struct ContentView: View {
                            symbol == "+"   ||
                            symbol == "="         ) ?
                                     Color.orange : Color.gray)
-                        .opacity(1.25)
+                        .opacity(0.95)
                         .clipShape(Capsule())
                         .foregroundColor(Color.black)
                         
