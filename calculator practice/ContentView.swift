@@ -16,13 +16,14 @@ struct ContentView: View {
     @State var displayHistory:[String] = []
     @State var computeHistory:[String] = []
     @State private var showSheet = false
-    // fix previous history tab 
+    // fix previous history tab
     // fix decimal it appends entire string to end of current input
     //percentage was reworked check for edge cases
     
     struct SheetView: View {
 
         @Binding var history: [String]
+        
         @Environment(\.dismiss) var dismiss
 
         var body: some View {
@@ -58,6 +59,7 @@ struct ContentView: View {
         onDisplay = []
         onDisplay.append(symbol)
         computeHistory.append(symbol)
+        handleHistory(computeHistory)
     }
     
     func handleInput(_ symbol: String){
