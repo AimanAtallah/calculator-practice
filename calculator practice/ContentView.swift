@@ -49,6 +49,7 @@ struct ContentView: View {
         var temp = ""
         for item in computeHistory{
             temp += item
+            temp += " "
         }
         computeHistory = []
         
@@ -58,6 +59,7 @@ struct ContentView: View {
     func handleOutput(_ symbol: String){
         onDisplay = []
         onDisplay.append(symbol)
+        computeHistory,append("=")
         computeHistory.append(symbol)
         handleHistory(computeHistory)
     }
