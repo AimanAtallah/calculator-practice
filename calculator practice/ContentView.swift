@@ -16,9 +16,8 @@ struct ContentView: View {
     @State var displayHistory:[String] = []
     @State var computeHistory:[String] = []
     @State private var showSheet = false
-    // fix previous history tab
-    // fix decimal it appends entire string to end of current input
-    //percentage was reworked check for edge cases
+   
+   
     
     struct SheetView: View {
 
@@ -59,7 +58,7 @@ struct ContentView: View {
     func handleOutput(_ symbol: String){
         onDisplay = []
         onDisplay.append(symbol)
-        computeHistory,append("=")
+        computeHistory.append("=")
         computeHistory.append(symbol)
         handleHistory(computeHistory)
     }
@@ -71,6 +70,7 @@ struct ContentView: View {
     
     func handleNumberTap(_ symbol: String){
         if computeDone {
+            onDisplay = []
             currentInput = symbol
             computeDone = false
             handleInput(symbol)
@@ -147,8 +147,17 @@ struct ContentView: View {
     
     func handleDecimals(){
         if !currentInput.contains(".") {
-            currentInput.append(".")
-            onDisplay.append(currentInput)
+            if previousInput == "0"{
+                onDisplay = []
+                computeHistory.removeAll{currentInput.contains($0)}
+                currentInput.append(".")
+                handleInput(currentInput)
+            }else{
+                onDisplay.removeAll{ currentInput.contains($0)}
+                computeHistory.removeAll{currentInput.contains($0)}
+                currentInput.append(".")
+                handleInput(currentInput)
+            }
         }
     }
     
